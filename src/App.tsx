@@ -1,5 +1,7 @@
-import { useForm } from "react-hook-form";
 import "./App.scss";
+import InputField from "./components/InputField";
+import { useLoginForm } from "./hooks/useLoginForm";
+import { loginRules } from "./validation/loginRules";
 
 interface FormData {
   email: string;
@@ -11,44 +13,30 @@ function App() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>();
+  } = useLoginForm();
   const onSubmit = (data: FormData) => console.log(data);
 
   return (
     <>
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <label htmlFor="email">Email</label>
-        <input
-          type="email"
+        <InputField
           id="email"
+          label="Email"
+          type="email"
+          autoFocus
           autoComplete="email"
-          {...register("email", {
-            required: true,
-            maxLength: 20,
-            pattern: {
-              value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-              message: "Invalid email format",
-            },
-          })}
-          aria-invalid={errors.email ? "true" : "false"}
+          {...register("email", loginRules.email)}
+          error={errors.email?.message}
         />
-        {errors.email && <p>{errors.email.message}</p>}
 
-        <label htmlFor="password">password</label>
-        <input
-          type="password"
+        <InputField
           id="password"
+          label="Password"
           autoComplete="current-password"
-          aria-invalid={errors.password ? "true" : "false"}
-          {...register("password", {
-            required: "Password is required",
-            minLength: {
-              value: 6,
-              message: "Password must be at least 6 characters",
-            },
-          })}
+          type="password"
+          {...register("password", loginRules.password)}
+          error={errors.password?.message}
         />
-        {errors.password && <p role="alert">{errors.password.message}</p>}
 
         <button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "...Loading" : "Submit"}
