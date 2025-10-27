@@ -21,9 +21,9 @@ function reducer(state: { count: number; name: string }, action: any) {
   switch (action.type) {
     case "increment":
       // console.log(state);
-      return { ...state, count: state.count + 1 };
+      return { ...state, count: state.count + action.count || 1 };
     case "decrement":
-      return { ...state, count: state.count - 1 };
+      return { ...state, count: state.count - action.count || 1 };
     case "changeName":
       return { ...state, name: action.name };
     default:
@@ -64,7 +64,11 @@ function App() {
 
   const PostList = React.memo(
     ({ post }: any) => {
-      return <div key={post.id} className="post">{post.title}</div>;
+      return (
+        <div key={post.id} className="post">
+          {post.title}
+        </div>
+      );
     },
     (prevPost, nextPost) => {
       return (
@@ -109,7 +113,7 @@ function App() {
           onClick={() =>
             dispatch({
               type: "increment",
-              name: "Max",
+              count: 2,
             })
           }
         >
