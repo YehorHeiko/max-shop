@@ -1,4 +1,4 @@
-import { useReducer } from "react";
+import React, { useEffect, useReducer, useState } from "react";
 import "./App.scss";
 import InputField from "./components/InputField";
 import { useLoginForm } from "./hooks/useLoginForm";
@@ -23,11 +23,11 @@ function reducer(state: { count: number; name: string }, action: any) {
     default:
       throw new Error();
   }
-
-  
 }
 
 const initialState = { count: 0, name: "John" };
+
+const API = "https://jsonplaceholder.typicode.com/todos";
 
 function App() {
   const {
@@ -38,10 +38,32 @@ function App() {
   const onSubmit = (data: FormData) => console.log(data);
 
   const [counter, dispatch] = useReducer(reducer, initialState);
+  const [posts, setPost] = useState([]);
+
+  const getPosts = async () => {
+    try {
+      const resApi = await fetch(API); // Получаем ответ от API
+      const data = await resApi.json(); // Парсим JSON
+      setPost(data); // Возвращаем данные
+    } catch (error) {
+      console.error("Ошибка при получении данных:", error);
+      return []; // Возвращаем пустой массив в случае ошибки
+    }
+  };
+
+  useEffect(() => {
+    getPosts();
+  }, []);
+
+  const PostList = React.memo(({ post }: any) => {
+    return <div>{post.title}</div>;
+  });
+
+  console.log(posts);
 
   return (
     <>
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      {/* <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <InputField
           id="email"
           label="Email"
@@ -100,6 +122,12 @@ function App() {
         >
           changeName
         </button>
+      </div> */}
+
+      <div>
+        {posts.map((post: any) => (
+          <PostList key={post.id} post={post} />
+        ))}
       </div>
     </>
   );
