@@ -23,6 +23,8 @@ function reducer(state: { count: number; name: string }, action: any) {
     default:
       throw new Error();
   }
+
+  
 }
 
 const initialState = { count: 0, name: "John" };
