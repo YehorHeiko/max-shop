@@ -1,4 +1,10 @@
-import React, { useEffect, useReducer, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useState,
+} from "react";
 import "./App.scss";
 import InputField from "./components/InputField";
 import { useLoginForm } from "./hooks/useLoginForm";
@@ -40,7 +46,7 @@ function App() {
   const [counter, dispatch] = useReducer(reducer, initialState);
   const [posts, setPost] = useState([]);
 
-  const getPosts = async () => {
+  const getPosts = useCallback(async () => {
     try {
       const resApi = await fetch(API); // Получаем ответ от API
       const data = await resApi.json(); // Парсим JSON
@@ -49,21 +55,30 @@ function App() {
       console.error("Ошибка при получении данных:", error);
       return []; // Возвращаем пустой массив в случае ошибки
     }
-  };
+  }, []);
 
   useEffect(() => {
     getPosts();
-  }, []);
+  }, [getPosts]);
+  const memoizedPosts = useMemo(() => posts, [posts]);
 
-  const PostList = React.memo(({ post }: any) => {
-    return <div>{post.title}</div>;
-  });
+  const PostList = React.memo(
+    ({ post }: any) => {
+      return <div key={post.id} className="post">{post.title}</div>;
+    },
+    (prevPost, nextPost) => {
+      return (
+        prevPost.post.title === nextPost.post.title &&
+        prevPost.post.id === nextPost.post.id
+      );
+    }
+  );
 
   console.log(posts);
 
   return (
     <>
-      {/* <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <InputField
           id="email"
           label="Email"
@@ -122,10 +137,10 @@ function App() {
         >
           changeName
         </button>
-      </div> */}
+      </div>
 
-      <div>
-        {posts.map((post: any) => (
+      <div className="posts">
+        {memoizedPosts.map((post: any) => (
           <PostList key={post.id} post={post} />
         ))}
       </div>
