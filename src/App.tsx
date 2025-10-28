@@ -31,6 +31,7 @@ function reducer(state: { count: number; name: string }, action: any) {
   }
 }
 
+
 const initialState = { count: 0, name: "John" };
 
 const API = "https://jsonplaceholder.typicode.com/todos";
