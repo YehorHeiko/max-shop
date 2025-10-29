@@ -45,28 +45,46 @@ function App() {
 
 
   const API = "https://jsonplaceholder.typicode.com/todos";
-  const [posts, setPost] = useState([]);
-  const memoizedPosts = useMemo(() => posts, [posts]);
+  const [posts, setPosts] = useState([]);
 
-
-  const getPosts = useCallback(async () => {
+  useEffect(() => {
     const controller = new AbortController();
-
-    try {
-      const resApi = await fetch(API, { signal: controller.signal }); // Получаем ответ от API
-      const data = await resApi.json(); // Парсим JSON
-      setPost(data); // Возвращаем данные
-    } catch (error) {
-      if (error !== "AbortError") console.error(error);
-      return []; // Возвращаем пустой массив в случае ошибки
-    }
-
+  
+    (async () => {
+      try {
+        const res = await fetch(API, { signal: controller.signal });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        setPosts(data);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          console.error("Failed to fetch posts:", error);
+        }
+      }
+    })();
+  
     return () => controller.abort();
   }, []);
 
-  useEffect(() => {
-    getPosts();
-  }, [getPosts]);
+
+  // const getPosts = useCallback(async () => {
+  //   const controller = new AbortController();
+
+  //   try {
+  //     const resApi = await fetch(API, { signal: controller.signal }); // Получаем ответ от API
+  //     const data = await resApi.json(); // Парсим JSON
+  //     setPost(data); // Возвращаем данные
+  //   } catch (error) {
+  //     if (error !== "AbortError") console.error(error);
+  //     return []; // Возвращаем пустой массив в случае ошибки
+  //   }
+
+  //   return () => controller.abort();
+  // }, []);
+
+  // useEffect(() => {
+  //   getPosts();
+  // }, [getPosts]);
 
   const PostList = React.memo(
     ({ post }: any) => {
@@ -150,7 +168,7 @@ function App() {
       </div>
 
       <div className="posts">
-        {memoizedPosts.map((post: any) => (
+        {posts.map((post: any) => (
           <PostList key={post.id} post={post} />
         ))}
       </div>
