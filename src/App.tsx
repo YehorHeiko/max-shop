@@ -31,10 +31,7 @@ function reducer(state: { count: number; name: string }, action: any) {
   }
 }
 
-
 const initialState = { count: 0, name: "John" };
-
-const API = "https://jsonplaceholder.typicode.com/todos";
 
 function App() {
   const {
@@ -45,23 +42,31 @@ function App() {
   const onSubmit = (data: FormData) => console.log(data);
 
   const [counter, dispatch] = useReducer(reducer, initialState);
+
+
+  const API = "https://jsonplaceholder.typicode.com/todos";
   const [posts, setPost] = useState([]);
+  const memoizedPosts = useMemo(() => posts, [posts]);
+
 
   const getPosts = useCallback(async () => {
+    const controller = new AbortController();
+
     try {
-      const resApi = await fetch(API); // Получаем ответ от API
+      const resApi = await fetch(API, { signal: controller.signal }); // Получаем ответ от API
       const data = await resApi.json(); // Парсим JSON
       setPost(data); // Возвращаем данные
     } catch (error) {
-      console.error("Ошибка при получении данных:", error);
+      if (error !== "AbortError") console.error(error);
       return []; // Возвращаем пустой массив в случае ошибки
     }
+
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {
     getPosts();
   }, [getPosts]);
-  const memoizedPosts = useMemo(() => posts, [posts]);
 
   const PostList = React.memo(
     ({ post }: any) => {
