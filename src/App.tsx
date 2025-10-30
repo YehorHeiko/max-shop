@@ -3,12 +3,14 @@ import React, {
   useEffect,
   useMemo,
   useReducer,
+  useRef,
   useState,
 } from "react";
 import "./App.scss";
 import InputField from "./components/InputField";
 import { useLoginForm } from "./hooks/useLoginForm";
 import { loginRules } from "./validation/loginRules";
+import { usePrevious } from "./hooks/usePrevious";
 
 interface FormData {
   email: string;
@@ -43,29 +45,27 @@ function App() {
 
   const [counter, dispatch] = useReducer(reducer, initialState);
 
-
   const API = "https://jsonplaceholder.typicode.com/todos";
   const [posts, setPosts] = useState([]);
 
-  useEffect(() => {
-    const controller = new AbortController();
-  
-    (async () => {
-      try {
-        const res = await fetch(API, { signal: controller.signal });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        setPosts(data);
-      } catch (error) {
-        if (error instanceof DOMException && error.name === "AbortError") {
-          console.error("Failed to fetch posts:", error);
-        }
-      }
-    })();
-  
-    return () => controller.abort();
-  }, []);
+  // useEffect(() => {
+  //   const controller = new AbortController();
 
+  //   (async () => {
+  //     try {
+  //       const res = await fetch(API, { signal: controller.signal });
+  //       if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  //       const data = await res.json();
+  //       setPosts(data);
+  //     } catch (error) {
+  //       if (error instanceof DOMException && error.name === "AbortError") {
+  //         console.error("Failed to fetch posts:", error);
+  //       }
+  //     }
+  //   })();
+
+  //   return () => controller.abort();
+  // }, []);
 
   // const getPosts = useCallback(async () => {
   //   const controller = new AbortController();
@@ -102,11 +102,27 @@ function App() {
     }
   );
 
-  console.log(posts);
+  // console.log(posts);
 
+  const myRef = useRef<HTMLInputElement>(null);
+
+  function focusInput() {
+    if (myRef.current) {
+      myRef.current.focus();
+    }
+  }
+
+  const [test1 , setTest1] = useState(0);
+
+  const prevTest1 = usePrevious(test1)
+  const message = 
+    (test1 > prevTest1 && prevTest1 !== undefined) 
+      ? `Увеличилось с ${prevTest1} до ${test1}!` 
+      : 'Значение не изменилось или уменьшилось.';
+  
   return (
     <>
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      {/* <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <InputField
           id="email"
           label="Email"
@@ -129,9 +145,9 @@ function App() {
         <button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "...Loading" : "Submit"}
         </button>
-      </form>
+      </form> */}
 
-      <div>
+      {/* <div>
         <div>{counter.count}</div>
         <button
           onClick={() =>
@@ -171,7 +187,14 @@ function App() {
         {posts.map((post: any) => (
           <PostList key={post.id} post={post} />
         ))}
-      </div>
+      </div> */}
+
+      <div>Now {prevTest1} numbers</div>
+      <div>{message}</div>
+      <button onClick={() => setTest1(test1 => test1 + 1)}>Increment</button>  
+
+      <input type="text" ref={myRef} />
+      <button onClick={focusInput}>Focus</button>
     </>
   );
 }
