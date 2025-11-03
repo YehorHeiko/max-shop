@@ -1,18 +1,11 @@
 import { useRef, useState } from "react";
+import { useTodo } from "./context/TodoContext";
 
 function App() {
-  const [todo, setTodo] = useState<string[]>([]);
   const [text, setText] = useState("");
-
+  const { dispatch, state } = useTodo();
   const ref = useRef(null);
 
-  function AddTodo(text: string) {
-    setTodo([...todo, text]);
-  }
-
-  function removeTodo(index: number) {
-    setTodo(todo.filter((_, i) => i !== index));
-  }
   return (
     <>
       <div>todo</div>
@@ -22,11 +15,19 @@ function App() {
         value={text}
         onChange={(e) => setText(e.target.value)}
       />
-      <button onClick={() => AddTodo(text)}>Add todo</button>
-      {todo?.map((e, index) => (
+      <button
+        onClick={() => dispatch({ type: "ADD_TODO", payload: text })}
+      >
+        Add todo
+      </button>
+      {state.todo?.map((e, index) => (
         <div key={index}>
-          <p>{e}</p>
-          <button onClick={() => removeTodo(index)}>x</button>
+          <p>{e.text}</p>
+          <button
+            onClick={() => dispatch({ type: "DELETE_TODO", payload: e.id })}
+          >
+            x
+          </button>
         </div>
       ))}
     </>
