@@ -67,9 +67,6 @@ function App() {
 
   //   return () => controller.abort();
   // }, []);
-
-
-
   
 
   // const getPosts = useCallback(async () => {
