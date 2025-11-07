@@ -1,10 +1,11 @@
 import { createContext, useContext, useReducer, type ReactNode } from "react";
 import { TodoReducer } from "./ todoReducer";
+import type { TodoAction, TodoState } from "../types/todo";
 
 type TodoContextType = {
-    state: { todo: { id: number; text: string }[] }; // Типизируем state
-    dispatch: React.Dispatch<any>; // Тип диспатча
-  };
+  state: TodoState; // Типизируем state
+  dispatch: React.Dispatch<TodoAction>; // Тип диспатча
+};
 
 interface TodoProviderProps {
   children: ReactNode;
@@ -20,7 +21,7 @@ export const useTodo = () => {
   return context;
 };
 
-const initialState = {todo: []};
+const initialState = { todo: [] };
 
 export const TodoProvider: React.FC<TodoProviderProps> = ({ children }) => {
   //   const [todo, setTodo] = useState<string[]>([]);
