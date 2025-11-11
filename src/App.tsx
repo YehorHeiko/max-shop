@@ -4,6 +4,8 @@ function App() {
   const [todo, setTodo] = useState<string[]>([]);
   const [text, setText] = useState("");
 
+  
+
   const ref = useRef(null);
 
   function AddTodo(text: string) {
