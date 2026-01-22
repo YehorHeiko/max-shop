@@ -1,38 +1,77 @@
-import { useRef, useState } from "react";
+import { useMemo, useState } from "react";
 
-function App() {
-  const [todo, setTodo] = useState<string[]>([]);
-  const [text, setText] = useState("");
+interface Order {
+  id: number;
+  customerName: string;
+  status: "new" | "paid" | "cancelled";
+  money: number;
+}
 
-  
+const orders: Order[] = [
+  { id: 1, customerName: "Elon Musk", status: "new", money: 2 },
+  { id: 2, customerName: "John Doe", status: "paid", money: 3 },
+  { id: 3, customerName: "Alex Smith", status: "cancelled", money: 44 },
+];
 
-  const ref = useRef(null);
+function OrdersWithStats() {
+  const [searchValue, setSearchValue] = useState("");
+  const [filterType, setFilterType] = useState<
+    "new" | "paid" | "cancelled" | "all"
+  >("all");
 
-  function AddTodo(text: string) {
-    setTodo([...todo, text]);
-  }
+  const search = searchValue.toLowerCase();
 
-  function removeTodo(index: number) {
-    setTodo(todo.filter((_, i) => i !== index));
-  }
+  const { filterClient, stats } = useMemo(() => {
+    const filteredDate = orders.filter((e) => {
+      const filterBySearch = e.customerName.includes(search);
+      const filterByType = e.status === filterType || filterType === "all";
+      return filterBySearch && filterByType;
+    });
+
+    return {
+      filterClient: filteredDate,
+      stats: {
+        sum: orders.reduce((total, e) => total + e.money, 0),
+        total: orders.length,
+        totalFiltered: filteredDate.length,
+      },
+    };
+  }, [filterType, search]);
+
   return (
     <>
-      <div>todo</div>
+      <select
+        name="select"
+        value={filterType}
+        onChange={(e) => {
+          setFilterType(e.target.value as "new" | "paid" | "cancelled" | "all");
+        }}
+      >
+        <option value="all">all</option>
+        <option value="new">new</option>
+        <option value="paid">paid</option>
+        <option value="cancelled">cancelled</option>
+      </select>
       <input
         type="text"
-        ref={ref}
-        value={text}
-        onChange={(e) => setText(e.target.value)}
+        value={searchValue}
+        onChange={(e) => {
+          setSearchValue(e.target.value);
+        }}
       />
-      <button onClick={() => AddTodo(text)}>Add todo</button>
-      {todo?.map((e, index) => (
-        <div key={index}>
-          <p>{e}</p>
-          <button onClick={() => removeTodo(index)}>x</button>
+      {filterClient.map((order) => (
+        <div key={order.id}>
+          <h1>{order.customerName}</h1>
+          <p>{order.status}</p>
         </div>
       ))}
+      <div className="stats">
+        <div>Total: {stats.total}</div>
+        <div>Total cost: {stats.sum}</div>
+        <div>Total Filtered: {stats.totalFiltered}</div>
+      </div>
     </>
   );
 }
 
-export default App;
+export default OrdersWithStats;
