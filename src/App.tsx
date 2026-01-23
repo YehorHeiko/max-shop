@@ -59,30 +59,45 @@ function OrdersWithStats() {
   const [mainTodos, setMainTodos] = useState<Todos[]>(todos);
   // const [state, dispatch] = useReducer(todoReducer, { items: todos });
 
+  // const onToggle = useCallback((id: number) => {
+  //   setMainTodos((prev) =>
+  //     prev.map((todo) =>
+  //       todo.id === id ? { ...todo, completed: !todo.completed } : todo
+  //     )
+  //   );
+  // }, []);
+
+  // const onAdd = useCallback(
+  //   (id: number, newTitle: string, complete: boolean) => {
+  //     const newTodo = { id, title: newTitle, completed: complete };
+
+  //     setMainTodos((prev) => {
+  //       console.log(prev, "prev");
+  //       return [...prev, newTodo];
+  //     });
+
+  //     // dispatch({ type: "ADD", payload: newTodo });
+  //   },
+  //   []
+  // );
+
+  // const onDelete = useCallback((id: number) => {
+  //   setMainTodos((prev) => prev.filter((e) => e.id != id));
+  // }, []);
+
   const onToggle = useCallback((id: number) => {
-    setMainTodos((prev) =>
-      prev.map((todo) =>
-        todo.id === id ? { ...todo, completed: !todo.completed } : todo
-      )
+    setMainTodos((prev) => 
+      prev.map((e) => (e.id === id ? { ...e, completed: !e.completed } : e))
     );
   }, []);
-
-  const onAdd = useCallback(
-    (id: number, newTitle: string, complete: boolean) => {
-      const newTodo = { id, title: newTitle, completed: complete };
-
-      setMainTodos((prev) => {
-        console.log(prev, "prev");
-        return [...prev, newTodo];
-      });
-
-      // dispatch({ type: "ADD", payload: newTodo });
-    },
-    []
-  );
-
+  const onAdd = useCallback((id, newTitle, completed) => {
+    setMainTodos((prev) => [
+      ...prev,
+      { id: id, title: newTitle, completed: completed },
+    ]);
+  }, []);
   const onDelete = useCallback((id: number) => {
-    setMainTodos((prev) => prev.filter((e) => e.id != id));
+    setMainTodos((prev) => prev.filter((e) => e.id !== id));
   }, []);
 
   return (
