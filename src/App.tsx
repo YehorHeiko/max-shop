@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useReducer, useState } from "react";
 interface Todos {
   id: number;
   title: string;
@@ -12,6 +12,31 @@ const todos: Todos[] = [
   { id: 4, title: "Jane Doe", completed: false },
   { id: 5, title: "Bob Wilson", completed: true },
 ];
+
+// const todoReducer = (state, action) => {
+//   switch (action.type) {
+//     case "ADD":
+//       return {
+//         ...state,
+//         items: [
+//           ...state.items,
+//           {
+//             id: action.payload.id,
+//             title: action.payload.title.trim(),
+//             completed: action.payload.completed,
+//           },
+//         ],
+//       };
+//     // case "DELETE":
+//     //   return {
+//     //     ...state,
+//     //     todos: [...state, ]
+//     //   };
+
+//     default:
+//       break;
+//   }
+// };
 
 const TodoItem: React.FC<{
   todo: Todos;
@@ -32,6 +57,7 @@ function OrdersWithStats() {
   const [unrelatedCounter, unrelatedSetCounter] = useState(0);
   const [newTitle, setNewTitle] = useState("");
   const [mainTodos, setMainTodos] = useState<Todos[]>(todos);
+  // const [state, dispatch] = useReducer(todoReducer, { items: todos });
 
   const onToggle = useCallback((id: number) => {
     setMainTodos((prev) =>
@@ -45,10 +71,13 @@ function OrdersWithStats() {
     (id: number, newTitle: string, complete: boolean) => {
       const newTodo = { id, title: newTitle, completed: complete };
 
+
       setMainTodos((prev) => {
         console.log(prev, "prev");
         return [...prev, newTodo];
       });
+
+      // dispatch({ type: "ADD", payload: newTodo });
     },
     []
   );
