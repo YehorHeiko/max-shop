@@ -1,101 +1,84 @@
-import { useMemo, useState } from "react";
-
-type OrderStatus = "new" | "paid" | "cancelled";
-type FilterStatus = OrderStatus | "all";
-
-interface Order {
+import React, { useCallback, useState } from "react";
+interface Todos {
   id: number;
-  customerName: string;
-  status: FilterStatus;
-  money: number;
+  title: string;
+  completed: boolean;
 }
 
-const orders: Order[] = [
-  { id: 1, customerName: "Elon Musk", status: "new", money: 2 },
-  { id: 2, customerName: "John Doe", status: "paid", money: 3 },
-  { id: 3, customerName: "Alex Smith", status: "cancelled", money: 44 },
+const todos: Todos[] = [
+  { id: 1, title: "Elon Musk", completed: true },
+  { id: 2, title: "John Doe", completed: true },
+  { id: 3, title: "Alex Smith", completed: false },
+  { id: 4, title: "Jane Doe", completed: false },
+  { id: 5, title: "Bob Wilson", completed: true },
 ];
 
-// helper
+const TodoItem: React.FC<{
+  todo: Todos;
+  onToggle: (id: number) => void;
+  onDelete: (id: number) => void;
+}> = React.memo(({ todo, onToggle, onDelete }) => {
+  console.log("render", todo.id, todo);
+  return (
+    <div>
+      <h1>{todo.title}</h1>
+      <button onClick={() => onToggle(todo.id)}>toggle</button>
+      <button onClick={() => onDelete(todo.id)}>delete</button>
+    </div>
+  );
+});
 
-const helperFunk = (data: Order[], filterType: FilterStatus, query: string) => {
-  const lowerQuery = query.toLowerCase();
+function OrdersWithStats() {
+  const [unrelatedCounter, unrelatedSetCounter] = useState(0);
+  const [newTitle, setNewTitle] = useState("");
+  const [mainTodos, setMainTodos] = useState<Todos[]>(todos);
 
-  return data.filter((e) => {
-    const filterForType = e.status === filterType || filterType === "all";
-    const filterForQuery = e.customerName.toLowerCase().includes(lowerQuery);
-    return filterForType && filterForQuery;
-  });
-};
+  const onToggle = useCallback((id: number) => {
+    setMainTodos((prev) =>
+      prev.map((todo) =>
+        todo.id === id ? { ...todo, completed: !todo.completed } : todo
+      )
+    );
+  }, []);
 
-const useOrderLogic = (data: Order[]) => {
-  const [query, setQuery] = useState<string>("");
-  const [filterType, setFilerType] = useState<FilterStatus>("all");
+  const onAdd = useCallback(
+    (id: number, newTitle: string, complete: boolean) => {
+      const newTodo = { id, title: newTitle, completed: complete };
 
-  const filteredOrders = useMemo(
-    () => helperFunk(data, filterType, query),
-    [data, filterType, query]
+      setMainTodos((prev) => [...prev, newTodo]);
+    },
+    []
   );
 
-  const stats = useMemo(
-    () => ({
-      total: data.length,
-      totalCost: data.reduce((start, sec) => start + sec.money, 0),
-      totalFiltered: filteredOrders.length,
-    }),
-    [data, filteredOrders]
-  );
+  const onDelete = useCallback((id: number) => {
+    setMainTodos((prev) => prev.filter((e) => e.id != id));
+  }, []);
 
-  return {
-    setters: {
-      setQuery,
-      setFilerType,
-    },
-    state: {
-      query,
-      filterType,
-    },
-    stats,
-    filteredOrders,
-  };
-};
-
-export const OrdersWithStats: React.FC = () => {
-  const { setters, state, filteredOrders, stats } = useOrderLogic(orders);
   return (
     <>
-      <select
-        name="select"
-        value={state.filterType}
-        onChange={(e) => {
-          setters.setFilerType(
-            e.target.value as "new" | "paid" | "cancelled" | "all"
-          );
-        }}
-      >
-        <option value="all">all</option>
-        <option value="new">new</option>
-        <option value="paid">paid</option>
-        <option value="cancelled">cancelled</option>
-      </select>
       <input
         type="text"
-        value={state.query}
-        onChange={(e) => {
-          setters.setQuery(e.target.value);
-        }}
+        value={newTitle}
+        onChange={(e) => setNewTitle(e.target.value)}
       />
-      {filteredOrders.map((order) => (
-        <div key={order.id}>
-          <h1>{order.customerName}</h1>
-          <p>{order.status}</p>
-        </div>
+      <button onClick={() => onAdd(Date.now(), newTitle, false)}>
+        add todo
+      </button>
+      {mainTodos.map((todo) => (
+        <TodoItem
+          todo={todo}
+          key={todo.id}
+          onToggle={onToggle}
+          onDelete={onDelete}
+        />
       ))}
-      <div className="stats">
-        <div>Total: {stats.total}</div>
-        <div>Total cost: {stats.totalCost}</div>
-        <div>Total cost filter: {stats.totalFiltered}</div>
-      </div>
+      <button
+        onClick={() => {
+          unrelatedSetCounter((e) => e + 1);
+        }}
+      >
+        {unrelatedCounter}
+      </button>
     </>
   );
 }
