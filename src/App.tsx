@@ -71,7 +71,6 @@ function OrdersWithStats() {
     (id: number, newTitle: string, complete: boolean) => {
       const newTodo = { id, title: newTitle, completed: complete };
 
-
       setMainTodos((prev) => {
         console.log(prev, "prev");
         return [...prev, newTodo];
