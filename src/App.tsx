@@ -1,132 +1,44 @@
-import React, { useCallback, useReducer, useState } from "react";
-interface Todos {
-  id: number;
-  title: string;
-  completed: boolean;
-}
+import React, { useMemo, useState } from "react";
 
-const todos: Todos[] = [
-  { id: 1, title: "Elon Musk", completed: true },
-  { id: 2, title: "John Doe", completed: true },
-  { id: 3, title: "Alex Smith", completed: false },
-  { id: 4, title: "Jane Doe", completed: false },
-  { id: 5, title: "Bob Wilson", completed: true },
-];
-
-// const todoReducer = (state, action) => {
-//   switch (action.type) {
-//     case "ADD":
-//       return {
-//         ...state,
-//         items: [
-//           ...state.items,
-//           {
-//             id: action.payload.id,
-//             title: action.payload.title.trim(),
-//             completed: action.payload.completed,
-//           },
-//         ],
-//       };
-//     // case "DELETE":
-//     //   return {
-//     //     ...state,
-//     //     todos: [...state, ]
-//     //   };
-
-//     default:
-//       break;
-//   }
-// };
-
-const TodoItem: React.FC<{
-  todo: Todos;
-  onToggle: (id: number) => void;
-  onDelete: (id: number) => void;
-}> = React.memo(({ todo, onToggle, onDelete }) => {
-  console.log("render", todo.id, todo);
-  return (
-    <div>
-      <h1>{todo.title}</h1>
-      <button onClick={() => onToggle(todo.id)}>toggle</button>
-      <button onClick={() => onDelete(todo.id)}>delete</button>
-    </div>
-  );
-});
-
-function OrdersWithStats() {
-  const [unrelatedCounter, unrelatedSetCounter] = useState(0);
-  const [newTitle, setNewTitle] = useState("");
-  const [mainTodos, setMainTodos] = useState<Todos[]>(todos);
-  // const [state, dispatch] = useReducer(todoReducer, { items: todos });
-
-  // const onToggle = useCallback((id: number) => {
-  //   setMainTodos((prev) =>
-  //     prev.map((todo) =>
-  //       todo.id === id ? { ...todo, completed: !todo.completed } : todo
-  //     )
-  //   );
-  // }, []);
-
-  // const onAdd = useCallback(
-  //   (id: number, newTitle: string, complete: boolean) => {
-  //     const newTodo = { id, title: newTitle, completed: complete };
-
-  //     setMainTodos((prev) => {
-  //       console.log(prev, "prev");
-  //       return [...prev, newTodo];
-  //     });
-
-  //     // dispatch({ type: "ADD", payload: newTodo });
-  //   },
-  //   []
-  // );
-
-  // const onDelete = useCallback((id: number) => {
-  //   setMainTodos((prev) => prev.filter((e) => e.id != id));
-  // }, []);
-
-  const onToggle = useCallback((id: number) => {
-    setMainTodos((prev) => 
-      prev.map((e) => (e.id === id ? { ...e, completed: !e.completed } : e))
-    );
-  }, []);
-  const onAdd = useCallback((id, newTitle, completed) => {
-    setMainTodos((prev) => [
-      ...prev,
-      { id: id, title: newTitle, completed: completed },
-    ]);
-  }, []);
-  const onDelete = useCallback((id: number) => {
-    setMainTodos((prev) => prev.filter((e) => e.id !== id));
-  }, []);
+const UserCard: React.FC<any> = React.memo(({ users }) => {
+  console.log("rerender");
 
   return (
     <>
-      <input
-        type="text"
-        value={newTitle}
-        onChange={(e) => setNewTitle(e.target.value)}
-      />
-      <button onClick={() => onAdd(Date.now(), newTitle, false)}>
-        add todo
-      </button>
-      {mainTodos.map((todo) => (
-        <TodoItem
-          todo={todo}
-          key={todo.id}
-          onToggle={onToggle}
-          onDelete={onDelete}
-        />
+      {users.map((e) => (
+        <div key={e.id}>
+          <h1>{e.name}</h1>
+          <h2>{e.email}</h2>
+          <p>{e.price}</p>
+          <p>{e.age}</p>
+        </div>
       ))}
-      <button
-        onClick={() => {
-          unrelatedSetCounter((e) => e + 1);
-        }}
-      >
-        {unrelatedCounter}
-      </button>
     </>
   );
-}
+});
 
-export default OrdersWithStats;
+export { UserCard };
+
+const ProductList = () => {
+  const USERS = useMemo(
+    () => [
+      { id: "p1", name: "Kevin", email: "123@gmail.com", age: 43 },
+      { id: "p2", name: "Alex", email: "313@gmail.com", age: 11 },
+      { id: "p3", name: "Jone", email: "223@gmail.com", age: 12 },
+    ],
+    []
+  );
+
+  const [conter, setCounter] = useState(0);
+  return (
+    <div style={{ padding: "20px" }}>
+      <h2>Список товаров со скидками</h2>
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        <UserCard users={USERS} />
+      </div>
+      <button onClick={() => setCounter((e) => e + 1)}>{conter}</button>
+    </div>
+  );
+};
+
+export default ProductList;
