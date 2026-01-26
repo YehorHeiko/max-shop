@@ -30,6 +30,8 @@ export default defineConfig([
       // Optionally, add this for stylistic rules
       tseslint.configs.stylisticTypeChecked,
 
+       erasableSyntaxOnly.configs.recommended,
+
       // Other configs...
     ],
     languageOptions: {
