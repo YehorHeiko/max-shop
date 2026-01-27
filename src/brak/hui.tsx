@@ -1,27 +1,24 @@
 import React, {
-  Children,
   createContext,
-  lazy,
-  Suspense,
   useContext,
-  useMemo,
   useReducer,
-  type ReactNode,
+  useMemo,
+  Suspense,
+  lazy,
+  ReactNode,
 } from "react";
+
+/* =======================
+     TYPES
+  ======================= */
 
 type TabType = "first" | "second" | "third";
 
 enum Status {
-  New = "New",
-  Canceled = "Canceled",
-  Paid = "Paid",
+  New = "NEW",
+  Paid = "PAID",
+  Canceled = "CANCELLED",
 }
-
-type Todo = {
-  id: number;
-  title: string;
-  completed: boolean;
-};
 
 type Order = {
   id: number;
@@ -29,6 +26,13 @@ type Order = {
   status: Status;
   money: number;
 };
+
+type Todo = {
+  id: number;
+  title: string;
+  completed: boolean;
+};
+
 type User = {
   id: string;
   name: string;
@@ -36,29 +40,9 @@ type User = {
   age: number;
 };
 
-type State = {
-  todoState: Todo[];
-  orderState: Order[];
-  activeTab: TabType;
-  queryTodo: string;
-  queryOrder: string;
-  queryFilter: Status | "all";
-  count: number;
-};
-
-type Action =
-  | { type: "SET_ACTIVE_TAB"; payload: TabType }
-  | { type: "SET_QUERY_TODO"; payload: string }
-  | { type: "SET_QUERY_ORDER"; payload: string }
-  | { type: "SET_ORDER_FILTER"; payload: Status | "all" }
-  | { type: "SET_COUNT"; payload: number }
-  | { type: "SET_ORDER_STATE"; payload: Order[] }
-  | { type: "SET_TODO_STATE"; payload: Todo[] };
-
-type Store = {
-  state: State;
-  dispatch: React.Dispatch<Action>;
-};
+/* =======================
+     STATIC DATA
+  ======================= */
 
 const INITIAL_TODOS: Todo[] = [
   { id: 1, title: "Elon Musk", completed: true },
@@ -73,6 +57,10 @@ const INITIAL_ORDERS: Order[] = [
   { id: 2, customerName: "John Doe", status: Status.Canceled, money: 3 },
   { id: 3, customerName: "Alex Smith", status: Status.Paid, money: 44 },
 ];
+
+/* =======================
+     TABS CONFIG
+  ======================= */
 
 const TABS: Record<
   TabType,
@@ -92,13 +80,36 @@ const TABS: Record<
   },
 };
 
+/* =======================
+     STATE
+  ======================= */
+
+type State = {
+  activeTab: TabType;
+  todos: Todo[];
+  todoQuery: string;
+  orders: Order[];
+  orderQuery: string;
+  orderFilter: Status | "ALL";
+  count: number;
+};
+
+type Action =
+  | { type: "SET_ACTIVE_TAB"; payload: TabType }
+  | { type: "SET_TODOS"; payload: Todo[] }
+  | { type: "SET_TODO_QUERY"; payload: string }
+  | { type: "SET_ORDERS"; payload: Order[] }
+  | { type: "SET_ORDER_QUERY"; payload: string }
+  | { type: "SET_ORDER_FILTER"; payload: Status | "ALL" }
+  | { type: "SET_COUNT"; payload: number };
+
 const initialState: State = {
   activeTab: "first",
-  todoState: INITIAL_TODOS,
-  orderState: INITIAL_ORDERS,
-  queryTodo: "",
-  queryOrder: "",
-  queryFilter: "all",
+  todos: INITIAL_TODOS,
+  todoQuery: "",
+  orders: INITIAL_ORDERS,
+  orderQuery: "",
+  orderFilter: "ALL",
   count: 0,
 };
 
@@ -106,36 +117,50 @@ function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "SET_ACTIVE_TAB":
       return { ...state, activeTab: action.payload };
-    case "SET_QUERY_TODO":
-      return { ...state, queryTodo: action.payload };
-    case "SET_QUERY_ORDER":
-      return { ...state, queryOrder: action.payload };
+
+    case "SET_TODOS":
+      return { ...state, todos: action.payload };
+
+    case "SET_TODO_QUERY":
+      return { ...state, todoQuery: action.payload };
+
+    case "SET_ORDERS":
+      return { ...state, orders: action.payload };
+
+    case "SET_ORDER_QUERY":
+      return { ...state, orderQuery: action.payload };
+
     case "SET_ORDER_FILTER":
-      return { ...state, queryFilter: action.payload };
+      return { ...state, orderFilter: action.payload };
+
     case "SET_COUNT":
       return { ...state, count: action.payload };
-    case "SET_ORDER_STATE":
-      return { ...state, orderState: action.payload };
-    case "SET_TODO_STATE":
-      return { ...state, todoState: action.payload };
 
     default:
       return state;
   }
 }
 
+/* =======================
+     CONTEXT
+  ======================= */
+
+type Store = {
+  state: State;
+  dispatch: React.Dispatch<Action>;
+};
+
 const StoreContext = createContext<Store | null>(null);
 
 const useStore = () => {
   const ctx = useContext(StoreContext);
-  if (!ctx) throw new Error("Error nothing in context");
+  if (!ctx) throw new Error("useStore must be used inside StoreProvider");
   return ctx;
 };
 
-const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+const StoreProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
+
   const value = useMemo(() => ({ state, dispatch }), [state]);
 
   return (
@@ -143,49 +168,56 @@ const StoreProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
+/* =======================
+     SELECTORS
+  ======================= */
+
 const selectFilteredTodos = (state: State) => {
-  const q = state.queryTodo.toLowerCase();
-
-  return state.todoState.filter((e) => e.title.toLowerCase().includes(q));
+  const q = state.todoQuery.toLowerCase();
+  return state.todos.filter((t) => t.title.toLowerCase().includes(q));
 };
+
 const selectFilteredOrders = (state: State) => {
-  const q = state.queryOrder.toLowerCase();
+  const q = state.orderQuery.toLowerCase();
+  return state.orders.filter((o) => {
+    const matchesFilter =
+      state.orderFilter === "ALL" || o.status === state.orderFilter;
+    const matchesQuery = o.customerName.toLowerCase().includes(q);
 
-  return state.orderState.filter((e) => {
-    const math = state.queryFilter === "all" || e.status === state.queryFilter;
-
-    const mathByQuery = e.customerName.toLowerCase().includes(q);
-
-    return math && mathByQuery;
+    return matchesFilter && matchesQuery;
   });
 };
+
 const selectOrderStats = (state: State) => {
   const filtered = selectFilteredOrders(state);
-
   return {
     count: filtered.length,
-    countFull: state.orderState.length,
+    countMain: state.orders.length,
   };
 };
 
-const useTodo = () => {
+/* =======================
+     VIEW-MODEL HOOKS
+  ======================= */
+
+const useTabsVM = () => {
   const { state, dispatch } = useStore();
 
   const setActiveTab = (tab: TabType) =>
     dispatch({ type: "SET_ACTIVE_TAB", payload: tab });
 
-  const renderActiveComponents = () => {
+  const renderActiveComponent = () => {
     const config = TABS[state.activeTab];
     const Component = config.component;
 
     return (
-      <Suspense fallback={<div>...Loading</div>}>
+      <Suspense fallback={<div>Loading {config.label}...</div>}>
         <Component />
       </Suspense>
     );
   };
 
-  return { activeTab: state.activeTab, setActiveTab, renderActiveComponents };
+  return { activeTab: state.activeTab, setActiveTab, renderActiveComponent };
 };
 
 const useTodosVM = () => {
@@ -193,45 +225,50 @@ const useTodosVM = () => {
 
   const todos = useMemo(
     () => selectFilteredTodos(state),
-    [state.todoState, state.queryTodo]
+    [state.todos, state.todoQuery]
   );
 
   const setQuery = (q: string) =>
-    dispatch({ type: "SET_QUERY_TODO", payload: q });
+    dispatch({ type: "SET_TODO_QUERY", payload: q });
 
   const addTodo = (title: string) => {
+    if (!title.trim()) return;
+
     const newTodo: Todo = {
-      title: title,
-      id: Math.random(),
+      id: Date.now(),
+      title,
       completed: false,
     };
+
     dispatch({
-      type: "SET_TODO_STATE",
-      payload: [...state.todoState, newTodo],
+      type: "SET_TODOS",
+      payload: [...state.todos, newTodo],
     });
   };
-  const deleteTodo = (id: number) => {
-    dispatch({
-      type: "SET_TODO_STATE",
-      payload: state.todoState.filter((e) => e.id !== id),
-    });
-  };
+
   const toggleTodo = (id: number) => {
     dispatch({
-      type: "SET_TODO_STATE",
-      payload: state.todoState.map((e) =>
-        e.id === id ? { ...e, completed: !e.completed } : e
+      type: "SET_TODOS",
+      payload: state.todos.map((t) =>
+        t.id === id ? { ...t, completed: !t.completed } : t
       ),
+    });
+  };
+
+  const deleteTodo = (id: number) => {
+    dispatch({
+      type: "SET_TODOS",
+      payload: state.todos.filter((t) => t.id !== id),
     });
   };
 
   return {
     todos,
+    query: state.todoQuery,
     setQuery,
-    query: state.queryTodo,
     addTodo,
-    deleteTodo,
     toggleTodo,
+    deleteTodo,
   };
 };
 
@@ -240,29 +277,33 @@ const useOrdersVM = () => {
 
   const orders = useMemo(
     () => selectFilteredOrders(state),
-    [state.orderState, state.queryFilter, state.queryOrder]
+    [state.orders, state.orderFilter, state.orderQuery]
   );
 
   const stats = useMemo(
     () => selectOrderStats(state),
-    [state.orderState, state.queryFilter, state.queryOrder]
+    [state.orders, state.orderFilter, state.orderQuery]
   );
 
   return {
     orders,
-    query: state.queryOrder,
-    filter: state.queryFilter,
+    query: state.orderQuery,
+    filter: state.orderFilter,
     count: state.count,
     stats,
-    setQuery: (q: string) => dispatch({ type: "SET_QUERY_ORDER", payload: q }),
-    setFilter: (f: Status | "all") =>
+    setQuery: (q: string) => dispatch({ type: "SET_ORDER_QUERY", payload: q }),
+    setFilter: (f: Status | "ALL") =>
       dispatch({ type: "SET_ORDER_FILTER", payload: f }),
     setCount: (c: number) => dispatch({ type: "SET_COUNT", payload: c }),
   };
 };
 
+/* =======================
+     UI COMPONENTS
+  ======================= */
+
 const ComponentsLoading: React.FC = () => {
-  const { setActiveTab, renderActiveComponents } = useTodo();
+  const { setActiveTab, renderActiveComponent } = useTabsVM();
 
   return (
     <>
@@ -273,48 +314,31 @@ const ComponentsLoading: React.FC = () => {
           </button>
         ))}
       </div>
-      {renderActiveComponents()}
+      {renderActiveComponent()}
     </>
   );
 };
 
-const ComponentsTodos: React.FC = () => {
-  const { todos, addTodo, deleteTodo, toggleTodo, query, setQuery } =
+const ComponentTodos: React.FC = () => {
+  const { todos, query, setQuery, addTodo, toggleTodo, deleteTodo } =
     useTodosVM();
 
   return (
     <>
       <input
-        type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search todos"
       />
-      <button
-        onClick={() => {
-          addTodo(query);
-        }}
-      >
-        addTodo
-      </button>
-      {todos.map((e) => (
-        <div key={e.id}>
+      <button onClick={() => addTodo(query)}>Add Todo</button>
+
+      {todos.map((t) => (
+        <div key={t.id}>
           <span>
-            {e.title} - {e.completed ? "Done" : "Pending"}
+            {t.title} — {t.completed ? "Done" : "Pending"}
           </span>
-          <button
-            onClick={() => {
-              toggleTodo(e.id);
-            }}
-          >
-            Toggle
-          </button>
-          <button
-            onClick={() => {
-              deleteTodo(e.id);
-            }}
-          >
-            Delete
-          </button>
+          <button onClick={() => toggleTodo(t.id)}>Toggle</button>
+          <button onClick={() => deleteTodo(t.id)}>Delete</button>
         </div>
       ))}
     </>
@@ -322,38 +346,38 @@ const ComponentsTodos: React.FC = () => {
 };
 
 const ComponentOrders: React.FC = () => {
-  const { orders, query, filter, count, stats, setQuery, setCount, setFilter } =
+  const { orders, query, filter, count, stats, setQuery, setFilter, setCount } =
     useOrdersVM();
 
   return (
     <>
       <input
-        type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search orders"
       />
       <select
         value={filter}
-        onChange={(e) => setFilter(e.target.value as Status | "all")}
+        onChange={(e) => setFilter(e.target.value as Status | "ALL")}
       >
-        <option value="all">All</option>
+        <option value="ALL">All</option>
         <option value={Status.New}>New</option>
-        <option value={Status.Canceled}>Canceled</option>
         <option value={Status.Paid}>Paid</option>
+        <option value={Status.Canceled}>Canceled</option>
       </select>
 
-      <button onClick={() => setCount(count + 1)}>Increment - {count}</button>
+      <button onClick={() => setCount(count + 1)}>Increment — {count}</button>
 
-      {orders.map((e) => (
-        <div key={e.id}>
-          <span>{e.customerName}</span>
-          <span>{e.money}</span>
-          <span>{e.status}</span>
+      {orders.map((o) => (
+        <div key={o.id}>
+          <span>{o.customerName}</span>
+          <span> — {o.money}</span>
+          <span> — {o.status}</span>
         </div>
       ))}
 
       <div>
-        {stats.count} / {stats.countFull}
+        {stats.count} / {stats.countMain}
       </div>
     </>
   );
@@ -390,6 +414,10 @@ class ErrorBoundary extends React.Component<
   }
 }
 
+/* =======================
+     APP
+  ======================= */
+
 const Home: React.FC = () => {
   const USERS: User[] = [
     { id: "p1", name: "Kevin", email: "123@gmail.com", age: 43 },
@@ -398,18 +426,14 @@ const Home: React.FC = () => {
   ];
 
   return (
-    <>
-      <ErrorBoundary>
-        <ComponentsLoading />
-        <ComponentOrders />
-        <ComponentsTodos />
-        <ListOfUsers users={USERS} />
-      </ErrorBoundary>
-    </>
+    <ErrorBoundary>
+      <ComponentsLoading />
+      <ComponentOrders />
+      <ComponentTodos />
+      <ListOfUsers users={USERS} />
+    </ErrorBoundary>
   );
 };
-
-export { Home };
 
 export default function App() {
   return (
